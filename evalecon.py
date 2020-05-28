@@ -3,7 +3,7 @@ import yaml
 
 path_to_recipies = "recipes/"
 
-missing_values = set()
+#missing_values = set()
 recipes = {}
 worth = {}
 
@@ -108,21 +108,26 @@ def calcWorth(item):
                     add = calcWorth(y)
                     #print(str(y) + " " + str(add))
                     sumTot += add
+            sumTot = round(sumTot/recipe['COUNT'],2)
         else:
             print("MISSING ITEM OF ID " + itemID)
-            missing_values.add(itemID)
-            return 0
+            worth[itemID] = float(input())
+            return worth[itemID]
         worth[itemID] = sumTot
-        return sumTot
+        return worth[itemID]
+
+def write_worth():
+    with open("updated_worth.yml", "w") as outstream:
+        try:
+            outdata = {'worth':worth}
+            yaml.safe_dump(outdata, outstream)
+        except yaml.YAMLError as exc:
+            print(exc)
 
 parse_worth()
 parse_recipes()
 
-print(len(worth))
-
 for x in recipes:
     calcWorth(x)
 
-print(len(worth))
-print(len(missing_values))
-print(missing_values)
+write_worth()
