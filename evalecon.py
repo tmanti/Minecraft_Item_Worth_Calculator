@@ -133,7 +133,7 @@ def write_worth():
             print(exc)
 
 def recalcItem(item):
-    print(item)
+    #print(item)
     itemID = getYMLID(item)
     if item not in affectedRecipes:#if nnot affected
         return worth[itemID]
@@ -144,10 +144,10 @@ def recalcItem(item):
             sumTot = 0
             recipe = recipes[item]
             for y in recipe:
-                print(str(y) + " : " + str(recipe))
+               # print(str(y) + " : " + str(recipe))
                 if not y == 'COUNT':
                     add = recalcItem(y)
-                    print(add)
+                    #print(add)
                     sumTot+=add*recipe[y]
             sumTot = round(sumTot/recipe['COUNT'],2)
             return sumTot
