@@ -25,6 +25,8 @@ def parse_recipes():
             data = json.load(json_file)
             if 'type' in data:
                 #print(data)
+                object_name = ""
+                recipe = {}
                 if data['type'] in ['minecraft:stonecutting','minecraft:smelting', 'minecraft:campfire_cooking', 'minecraft:smoking', 'minecraft:blasting']:
                     object_name = data['result']
 
@@ -93,6 +95,12 @@ def parse_recipes():
                     if not recipe:
                         print("EMPTY RECIPE ON " + data)
                     recipes[object_name] = recipe
+                if(to_recalc):
+                    for x in recipe:
+                        if x in affectedRecipes:
+                            affectedRecipes.add(object_name)
+                            break
+
 
 def calcWorth(item):
     itemID = getYMLID(item)
@@ -107,7 +115,7 @@ def calcWorth(item):
                 if not y == 'COUNT':
                     add = calcWorth(y)
                     #print(str(y) + " " + str(add))
-                    sumTot += add
+                    sumTot += add*recipe[y]
             sumTot = round(sumTot/recipe['COUNT'],2)
         else:
             print("MISSING ITEM OF ID " + itemID)
@@ -124,10 +132,78 @@ def write_worth():
         except yaml.YAMLError as exc:
             print(exc)
 
+def recalcItem(item):
+    print(item)
+    itemID = getYMLID(item)
+    if item not in affectedRecipes:#if nnot affected
+        return worth[itemID]
+    else:#if affected
+        if item in itemsToRecalc:  # if item was directly channged\
+            return itemsToRecalc[item]
+        elif item in recipes:#if item has recipe
+            sumTot = 0
+            recipe = recipes[item]
+            for y in recipe:
+                print(str(y) + " : " + str(recipe))
+                if not y == 'COUNT':
+                    add = recalcItem(y)
+                    print(add)
+                    sumTot+=add*recipe[y]
+            sumTot = round(sumTot/recipe['COUNT'],2)
+            return sumTot
+        else:#if item doesn't hvae recipe
+             return worth[itemID]
+
+to_recalc = False
+itemsToRecalc = {}
+affectedRecipes = set()
+recalcd = set()
+
+while True:
+    user_in = input("Would you like to recalculate values of items: ")
+    if(user_in.lower() in ['yes', 'y']):
+        to_recalc=True
+        break
+    elif(user_in.lower() in ['no', 'n']):
+        to_recalc=False
+        break
+    else:
+        print("please enter a valid answer")
+
+
 parse_worth()
+
+while to_recalc:
+    user_in = input("Please enter the id of the item you would like to change, type 'stop' to stop: ")
+    if user_in == 'stop':
+        break
+    else:
+        if "minecraft:" in user_in:
+            try:
+                itemsToRecalc[user_in] = int(input("enter the value to be changed to: "))
+                affectedRecipes.add(user_in)
+            except:
+                print("that is not a valid id or an improper value")
+                continue
+        else:
+            try:
+                user_in = "minecraft:" + user_in
+                itemsToRecalc[user_in] = int(input("enter the value to be changed to: "))
+                affectedRecipes.add(user_in)
+            except:
+                print("that is not a valid id or an improper value")
+                continue
+
 parse_recipes()
 
-for x in recipes:
-    calcWorth(x)
+if not to_recalc:
+    for x in recipes:
+        calcWorth(x)
+else:
+    print("amount of recipes to be changed: " + str(len(affectedRecipes)))
+    for x in affectedRecipes:
+        worth[getYMLID(x)] = recalcItem(x)
+        print("value of item '" + x + "' has been corrected to: " + str(worth[getYMLID(x)]))
+
 
 write_worth()
